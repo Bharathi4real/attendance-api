@@ -16,7 +16,7 @@ func main() {
 
 	r.POST("/login", api.Login)
 
-	err = r.Run(":8080")
+	err = r.Run("0.0.0.0:8080")
 	if err != nil {
 		return
 	}
