@@ -89,7 +89,7 @@ func Login(c *gin.Context) {
 
 	var token string
 	if user.Username == adminUsername && user.Password == adminPassword {
-
+		// Admin login successful, generate a token (e.g., JWT) here
 		token, err = generateToken(user.Username, "admin")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
@@ -102,13 +102,23 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	authenticated := db.FacultyLogin(user.Username, user.Password)
-
-	if authenticated {
-		c.JSON(http.StatusOK, gin.H{"message": "Faculty logged in successfully"})
-	} else {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+	// If not an admin, check if faculty login is successful
+	facultyAuthenticated := db.FacultyLogin(user.Username, user.Password)
+	if facultyAuthenticated {
+		// Faculty login successful, generate a token (e.g., JWT) here
+		token, err = generateToken(user.Username, "faculty")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Faculty logged in successfully",
+			"token":   token,
+		})
+		return
 	}
+
+	c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 }
 
 func verifyToken(c *gin.Context) {

@@ -1,7 +1,6 @@
 package db
 
 import (
-	"attendance-api/models"
 	"database/sql"
 	"log"
 
@@ -34,13 +33,17 @@ func createFacultyTable() {
 	}
 }
 
-func GetFacultyByUsernameAndPassword(username, password string) (*models.User, error) {
-	var faculty models.User
-	err := db.QueryRow("SELECT id, username, password FROM faculty WHERE username = $1 AND password = $2", username, password).Scan(&faculty.ID, &faculty.Username, &faculty.Password)
+func UsernameExists(username string) (bool, error) {
+
+	const query = "SELECT COUNT(*) FROM faculty WHERE username = $1"
+
+	var count int
+	err := db.QueryRow(query, username).Scan(&count)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
-	return &faculty, nil
+
+	return count > 0, nil
 }
 
 func AddFaculty(username, password string) (int, error) {
@@ -66,17 +69,4 @@ func RemoveFaculty(username string) error {
 	}
 
 	return nil
-}
-
-func UsernameExists(username string) (bool, error) {
-
-	const query = "SELECT COUNT(*) FROM faculty WHERE username = $1"
-
-	var count int
-	err := db.QueryRow(query, username).Scan(&count)
-	if err != nil {
-		return false, err
-	}
-
-	return count > 0, nil
 }
