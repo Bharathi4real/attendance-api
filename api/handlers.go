@@ -195,7 +195,7 @@ func CreateFacultyCredentials(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Faculty credentials created successfully", "faculty_id": facultyID})
+	c.JSON(http.StatusOK, gin.H{"message": "Faculty credentials created successfully", "faculty_info": facultyInfo})
 }
 
 func DeleteFaculty(c *gin.Context) {
