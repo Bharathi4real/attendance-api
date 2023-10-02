@@ -19,7 +19,6 @@ func InitDB() error {
 }
 
 func FacultyLogin(username, password string) bool {
-
 	query := "SELECT COUNT(*) FROM faculty WHERE username=$1 AND password=$2"
 	var count int
 	err := db.QueryRow(query, username, password).Scan(&count)

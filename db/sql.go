@@ -1,25 +1,82 @@
 package db
 
 import (
-	"fmt"
+	"attendance-api/models"
+	"database/sql"
 	"log"
+
+	_ "github.com/lib/pq"
 )
 
-func CreateTable() error {
+func init() {
+	dataSourceName := "postgres://nvpqlwmr:hvpv3FW97Qd4TFIN2ECVlDFynCjhtnKj@bubble.db.elephantsql.com/nvpqlwmr?sslmode=disable"
 
-	createTableSQL := `
+	var err error
+
+	db, err = sql.Open("postgres", dataSourceName)
+	if err != nil {
+		log.Fatalf("Error connecting to the database: %v", err)
+	}
+
+	createFacultyTable()
+}
+
+func createFacultyTable() {
+	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS faculty (
 			id SERIAL PRIMARY KEY,
 			username TEXT NOT NULL,
 			password TEXT NOT NULL
-		);
-	`
-
-	_, err := db.Exec(createTableSQL)
+		)
+	`)
 	if err != nil {
-		return fmt.Errorf("error creating table: %v", err)
+		log.Fatalf("Error creating faculty table: %v", err)
+	}
+}
+
+func GetFacultyByUsernameAndPassword(username, password string) (*models.User, error) {
+	var faculty models.User
+	err := db.QueryRow("SELECT id, username, password FROM faculty WHERE username = $1 AND password = $2", username, password).Scan(&faculty.ID, &faculty.Username, &faculty.Password)
+	if err != nil {
+		return nil, err
+	}
+	return &faculty, nil
+}
+
+func AddFaculty(username, password string) (int, error) {
+	const query = "INSERT INTO faculty (username, password) VALUES ($1, $2) RETURNING id"
+
+	var lastInsertID int
+	err := db.QueryRow(query, username, password).Scan(&lastInsertID)
+	if err != nil {
+		log.Printf("Error inserting faculty: %v", err)
+		return 0, err
 	}
 
-	log.Println("Faculty table created successfully")
+	return lastInsertID, nil
+}
+
+func DeleteFaculty(username string) error {
+	const query = "DELETE FROM faculty WHERE username = $1"
+
+	_, err := db.Exec(query, username)
+	if err != nil {
+		log.Printf("Error deleting faculty: %v", err)
+		return err
+	}
+
 	return nil
+}
+
+func UsernameExists(username string) (bool, error) {
+
+	const query = "SELECT COUNT(*) FROM faculty WHERE username = $1"
+
+	var count int
+	err := db.QueryRow(query, username).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }

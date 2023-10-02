@@ -5,10 +5,13 @@ import (
 	"attendance-api/models"
 	"encoding/json"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 )
 
 func loadAdminCredentials() (string, string, error) {
@@ -49,8 +52,25 @@ func loadAdminCredentials() (string, string, error) {
 		fmt.Println("Admin password not found in config")
 		return "", "", fmt.Errorf("admin_password not found in config")
 	}
-
 	return adminUsername, adminPassword, nil
+}
+
+var jwtSecret = []byte("UOEapGWYMB9wa5rtNUUfFl9EBS_38JUCFl_MTb1DPSM=")
+
+func generateToken(username, role string) (string, error) {
+	claims := jwt.MapClaims{
+		"username": username,
+		"role":     role,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }
 
 func Login(c *gin.Context) {
@@ -67,8 +87,18 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	var token string
 	if user.Username == adminUsername && user.Password == adminPassword {
-		c.JSON(http.StatusOK, gin.H{"message": "Admin logged in successfully"})
+
+		token, err = generateToken(user.Username, "admin")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Admin logged in successfully",
+			"token":   token,
+		})
 		return
 	}
 
@@ -79,4 +109,84 @@ func Login(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 	}
+}
+
+func verifyToken(c *gin.Context) {
+	tokenString := c.Request.Header.Get("Authorization")
+	if tokenString == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "No token provided"})
+		c.Abort()
+		return
+	}
+
+	// Extract the token from the Authorization header
+	parts := strings.Split(tokenString, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
+		c.Abort()
+		return
+	}
+
+	tokenString = parts[1]
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		c.Abort()
+		return
+	}
+
+	role, ok := claims["role"].(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Role not found in token"})
+		c.Abort()
+		return
+	}
+
+	c.Set("role", role)
+}
+
+func CreateFacultyCredentials(c *gin.Context) {
+
+	verifyToken(c)
+
+	role, _ := c.Get("role")
+	if role != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Only admins can perform this action"})
+		return
+	}
+
+	var facultyInfo models.User
+	if err := c.ShouldBindJSON(&facultyInfo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	exists, err := db.UsernameExists(facultyInfo.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error checking username existence"})
+		return
+	}
+
+	if exists {
+		c.JSON(http.StatusConflict, gin.H{"error": "Username exists already, try another username"})
+		return
+	}
+
+	facultyID, err := db.AddFaculty(facultyInfo.Username, facultyInfo.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create faculty credentials"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Faculty credentials created successfully", "faculty_id": facultyID})
 }
