@@ -56,7 +56,7 @@ func AddFaculty(username, password string) (int, error) {
 	return lastInsertID, nil
 }
 
-func DeleteFaculty(username string) error {
+func RemoveFaculty(username string) error {
 	const query = "DELETE FROM faculty WHERE username = $1"
 
 	_, err := db.Exec(query, username)

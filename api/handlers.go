@@ -190,3 +190,39 @@ func CreateFacultyCredentials(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Faculty credentials created successfully", "faculty_id": facultyID})
 }
+
+func DeleteFaculty(c *gin.Context) {
+
+	verifyToken(c)
+
+	role, _ := c.Get("role")
+	if role != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Only admins can perform this action"})
+		return
+	}
+
+	var facultyInfo models.User
+	if err := c.ShouldBindJSON(&facultyInfo); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	exists, err := db.UsernameExists(facultyInfo.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error checking username existence"})
+		return
+	}
+
+	if !exists {
+		c.JSON(http.StatusConflict, gin.H{"error": "Username doesn't exist"})
+		return
+	}
+	err = db.RemoveFaculty(facultyInfo.Username)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete faculty credentials"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Faculty credentials deleted successfully", "faculty_id": facultyInfo})
+}

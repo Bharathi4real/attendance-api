@@ -15,7 +15,8 @@ func main() {
 	r := gin.Default()
 
 	r.POST("/login", api.Login)
-	r.POST("/create-faculty", api.CreateFacultyCredentials) // New route for creating faculty credentials
+	r.POST("/create-faculty", api.CreateFacultyCredentials)
+	r.POST("/delete-faculty", api.DeleteFaculty)
 
 	err = r.Run("0.0.0.0:8080")
 	if err != nil {
