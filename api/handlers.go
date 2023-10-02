@@ -115,7 +115,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+	c.JSON(http.StatusUnauthorized, gin.H{"error": "Incorrect password for the provided username"})
 }
 
 func verifyToken(c *gin.Context) {
