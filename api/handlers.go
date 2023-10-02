@@ -231,5 +231,5 @@ func DeleteFaculty(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Faculty credentials deleted successfully", "faculty_id": facultyInfo})
+	c.JSON(http.StatusOK, gin.H{"message": "Faculty credentials deleted successfully", "faculty_id": facultyInfo.Username})
 }
