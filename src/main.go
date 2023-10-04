@@ -4,33 +4,20 @@ import (
 	"attendance-api/api"
 	"attendance-api/db"
 	"github.com/gin-gonic/gin"
-	"net/http"
+	"log"
 )
 
 func main() {
-	err := db.InitDB()
-	if err != nil {
-		return
+
+	if err := db.InitDB(); err != nil {
+		log.Fatalf("Failed to initialize the database: %v", err)
 	}
 
 	r := gin.Default()
 
-	r.POST("/login", api.Login)
-	r.OPTIONS("/login", func(c *gin.Context) {
-		c.Status(http.StatusOK) //CORS HANDLING
-	})
+	api.SetupRoutes(r)
 
-	r.POST("/create-faculty", api.CreateFacultyCredentials)
-	r.OPTIONS("/create-faculty", func(c *gin.Context) {
-		c.Status(http.StatusOK) //CORS HANDLING
-	})
-	r.POST("/delete-faculty", api.DeleteFaculty)
-	r.OPTIONS("/delete-faculty", func(c *gin.Context) {
-		c.Status(http.StatusOK) //CORS HANDLING
-	})
-
-	err = r.Run("0.0.0.0:8080")
-	if err != nil {
-		return
+	if err := r.Run("0.0.0.0:8080"); err != nil {
+		log.Fatalf("Failed to start the server: %v", err)
 	}
 }
