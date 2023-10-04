@@ -72,7 +72,6 @@ func generateToken(username, role string) (string, error) {
 
 	return tokenString, nil
 }
-
 func Login(c *gin.Context) {
 	adminUsername, adminPassword, err := loadAdminCredentials()
 	if err != nil {
@@ -233,3 +232,5 @@ func DeleteFaculty(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Faculty credentials deleted successfully", "faculty_id": facultyInfo})
 }
+
+// make a func which enables access to all faculty function to admin but restricts faculty to access admin func.
