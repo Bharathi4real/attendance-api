@@ -2,7 +2,6 @@ package main
 
 import (
 	"attendance-api/api"
-	"attendance-api/db"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -12,7 +11,7 @@ import (
 
 func main() {
 
-	db.InitDBS()
+	//db.InitDBS()
 
 	err := godotenv.Load(".env")
 	if err != nil {
