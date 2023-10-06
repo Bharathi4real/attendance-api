@@ -3,16 +3,17 @@ package db
 import (
 	"database/sql"
 	"log"
+	"os"
 
 	_ "github.com/lib/pq"
 )
 
 func init() {
-	dataSourceName := "postgres://nvpqlwmr:hvpv3FW97Qd4TFIN2ECVlDFynCjhtnKj@bubble.db.elephantsql.com/nvpqlwmr?sslmode=disable"
+	database := os.Getenv("DB_URL")
 
 	var err error
 
-	db, err = sql.Open("postgres", dataSourceName)
+	db, err = sql.Open("postgres", database)
 	if err != nil {
 		log.Fatalf("Error connecting to the database: %v", err)
 	}

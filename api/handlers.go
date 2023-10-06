@@ -55,7 +55,12 @@ func loadAdminCredentials() (string, string, error) {
 	return adminUsername, adminPassword, nil
 }
 
-var jwtSecret = []byte("UOEapGWYMB9wa5rtNUUfFl9EBS_38JUCFl_MTb1DPSM=")
+var jwtSecret []byte
+
+func init() {
+	jwtSecret = []byte(os.Getenv("JWT_TOKEN"))
+
+}
 
 func generateToken(username, role string) (string, error) {
 	claims := jwt.MapClaims{

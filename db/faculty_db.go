@@ -4,13 +4,15 @@ import (
 	"database/sql"
 	_ "github.com/lib/pq"
 	"log"
+	"os"
 )
 
 var db *sql.DB
 
 func InitDB() error {
+	database := os.Getenv("DB_URL")
 	var err error
-	db, err = sql.Open("postgres", "postgres://nvpqlwmr:hvpv3FW97Qd4TFIN2ECVlDFynCjhtnKj@bubble.db.elephantsql.com/nvpqlwmr?sslmode=disable")
+	db, err = sql.Open("postgres", database)
 	if err != nil {
 		log.Fatal(err)
 		return err
