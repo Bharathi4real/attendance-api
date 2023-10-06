@@ -3,55 +3,33 @@ package api
 import (
 	"attendance-api/db"
 	"attendance-api/models"
-	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
 
 func loadAdminCredentials() (string, string, error) {
-
-	cwd, err := os.Getwd()
+	err := godotenv.Load()
 	if err != nil {
-		return "", "", fmt.Errorf("failed to get current working directory: %v", err)
+		return "", "", fmt.Errorf("failed to load .env file: %v", err)
 	}
 
-	configFilePath := filepath.Join(cwd, "..", "config", "config.json")
-	fmt.Println("Attempting to load admin credentials from:", configFilePath)
+	adminUsername := os.Getenv("ADMIN_USERNAME")
+	adminPassword := os.Getenv("ADMIN_PASSWORD")
 
-	configFile, err := os.Open(configFilePath)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to open config file: %v", err)
-	}
-	defer func(configFile *os.File) {
-		err := configFile.Close()
-		if err != nil {
-
-		}
-	}(configFile)
-
-	var config map[string]string
-	if err := json.NewDecoder(configFile).Decode(&config); err != nil {
-		fmt.Println("Error decoding config file:", err)
-		return "", "", fmt.Errorf("failed to decode config file: %v", err)
+	if adminUsername == "" {
+		return "", "", fmt.Errorf("admin_username not found in .env")
 	}
 
-	adminUsername, ok := config["admin_username"]
-	if !ok {
-		fmt.Println("Admin username not found in config")
-		return "", "", fmt.Errorf("admin_username not found in config")
+	if adminPassword == "" {
+		return "", "", fmt.Errorf("admin_password not found in .env")
 	}
 
-	adminPassword, ok := config["admin_password"]
-	if !ok {
-		fmt.Println("Admin password not found in config")
-		return "", "", fmt.Errorf("admin_password not found in config")
-	}
 	return adminUsername, adminPassword, nil
 }
 
