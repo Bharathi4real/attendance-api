@@ -1,28 +1,32 @@
 package db
 
 import (
-	"database/sql"
+	"context"
+	"github.com/jackc/pgx/v4"
 	"log"
-	"os"
-
-	_ "github.com/lib/pq"
 )
 
-func init() {
-	database := os.Getenv("DB_URL")
+var conn *pgx.Conn
 
-	var err error
-
-	db, err = sql.Open("postgres", database)
-	if err != nil {
-		log.Fatalf("Error connecting to the database: %v", err)
-	}
-
-	createFacultyTable()
-}
+//func InitDBS() {
+//	databaseURL := os.Getenv("DB_URL")
+//
+//	if !strings.Contains(databaseURL, "sslmode") {
+//		databaseURL += "?sslmode=disable"
+//	}
+//
+//	var err error
+//
+//	conn, err = pgx.Connect(context.Background(), databaseURL)
+//	if err != nil {
+//		log.Fatalf("Error connecting to the database: %v", err)
+//	}
+//
+//	createFacultyTable()
+//}
 
 func createFacultyTable() {
-	_, err := db.Exec(`
+	_, err := conn.Exec(context.Background(), `
 		CREATE TABLE IF NOT EXISTS faculty (
 			id SERIAL PRIMARY KEY,
 			username TEXT NOT NULL,
@@ -35,11 +39,10 @@ func createFacultyTable() {
 }
 
 func UsernameExists(username string) (bool, error) {
-
 	const query = "SELECT COUNT(*) FROM faculty WHERE username = $1"
 
 	var count int
-	err := db.QueryRow(query, username).Scan(&count)
+	err := conn.QueryRow(context.Background(), query, username).Scan(&count)
 	if err != nil {
 		return false, err
 	}
@@ -51,7 +54,7 @@ func AddFaculty(username, password string) (int, error) {
 	const query = "INSERT INTO faculty (username, password) VALUES ($1, $2) RETURNING id"
 
 	var lastInsertID int
-	err := db.QueryRow(query, username, password).Scan(&lastInsertID)
+	err := conn.QueryRow(context.Background(), query, username, password).Scan(&lastInsertID)
 	if err != nil {
 		log.Printf("Error inserting faculty: %v", err)
 		return 0, err
@@ -63,7 +66,7 @@ func AddFaculty(username, password string) (int, error) {
 func RemoveFaculty(username string) error {
 	const query = "DELETE FROM faculty WHERE username = $1"
 
-	_, err := db.Exec(query, username)
+	_, err := conn.Exec(context.Background(), query, username)
 	if err != nil {
 		log.Printf("Error deleting faculty: %v", err)
 		return err

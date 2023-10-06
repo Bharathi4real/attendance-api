@@ -12,9 +12,8 @@ import (
 
 func main() {
 
-	if err := db.InitDB(); err != nil {
-		log.Fatalf("Failed to initialize the database: %v", err)
-	}
+	db.InitDBS()
+
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
@@ -29,5 +28,3 @@ func main() {
 		log.Fatalf("Failed to start the server: %v", err)
 	}
 }
-
-// add admin username pass to .env
