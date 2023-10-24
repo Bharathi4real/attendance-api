@@ -4,8 +4,9 @@ import (
 	"attendance-api/db"
 	"attendance-api/models"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 func Login(c *gin.Context) {
@@ -123,4 +124,25 @@ func DeleteFaculty(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Faculty credentials deleted successfully", "faculty_id": facultyInfo})
+}
+
+func AssignFacultyToClass(c *gin.Context) {
+	// Check if the user is an admin
+	if !isAdmin(c) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Only admins can perform this action"})
+		return
+	}
+
+	classID := c.Param("class_id")
+	facultyID := c.Param("faculty_id")
+
+	err := db.AssignFacultyToClass(facultyID, classID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign faculty to class"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Faculty assigned to class successfully",
+	})
 }
